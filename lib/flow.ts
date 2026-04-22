@@ -4,6 +4,7 @@ export type ActionSlug =
   | "sell-bcv"
   | "sell-private"
   | "convert-bcv"
+  | "convert-bcv-from-ves"
   | "convert-private"
   | "convert-unified";
 
@@ -15,12 +16,19 @@ export type CurrencySlug = "usd" | "eur";
 /** Query en /currency para el flujo unificado comprar/vender (misma conversión). */
 export const CURRENCY_CONVERT_MODE = "convert";
 
+/** Query en /currency: bolívares → USD/EUR con tasa BCV. */
+export const CURRENCY_VES_BCV_MODE = "ves-bcv";
+
 export const ACTIONS: { slug: ActionSlug; label: string }[] = [
   { slug: "buy-bcv", label: "Comprar a BCV" },
   { slug: "buy-private", label: "Comprar a un particular" },
   { slug: "sell-bcv", label: "Vender a BCV" },
   { slug: "sell-private", label: "Vender a un particular" },
   { slug: "convert-bcv", label: "Conversión BCV" },
+  {
+    slug: "convert-bcv-from-ves",
+    label: "Bolívares a moneda (BCV)",
+  },
   { slug: "convert-private", label: "Conversión particular" },
   { slug: "convert-unified", label: "Conversión BCV y particular" },
 ];
@@ -37,6 +45,7 @@ export function isActionSlug(v: string | null): v is ActionSlug {
     v === "sell-bcv" ||
     v === "sell-private" ||
     v === "convert-bcv" ||
+    v === "convert-bcv-from-ves" ||
     v === "convert-private" ||
     v === "convert-unified"
   );
@@ -74,6 +83,15 @@ export function isConvertMode(v: string | null | undefined): boolean {
   return v === CURRENCY_CONVERT_MODE;
 }
 
+export function isVesBcvMode(v: string | null | undefined): boolean {
+  return v === CURRENCY_VES_BCV_MODE;
+}
+
+/** Paso de moneda: bolívares → USD/EUR (solo BCV). */
+export function currencyVesBcvHref(): string {
+  return `/currency?mode=${CURRENCY_VES_BCV_MODE}`;
+}
+
 /** Paso de moneda del flujo unificado comprar/vender (BCV + particular). */
 export function currencyUnifiedHref(): string {
   return `/currency?mode=${CURRENCY_CONVERT_MODE}`;
@@ -86,6 +104,9 @@ export function currencyChannelHref(_channel: FlowChannel): string {
 
 /** Volver desde /convert al paso de moneda. */
 export function currencyStepHref(action: ActionSlug): string {
+  if (action === "convert-bcv-from-ves") {
+    return currencyVesBcvHref();
+  }
   if (action === "convert-unified") {
     return currencyUnifiedHref();
   }
@@ -107,6 +128,9 @@ export function currencyStepHref(action: ActionSlug): string {
 }
 
 export function currencyPageEyebrow(action: ActionSlug): string {
+  if (action === "convert-bcv-from-ves") {
+    return "BCV · Bolívares a dólares o euros";
+  }
   if (isConvertFlowAction(action)) {
     if (action === "convert-unified") return "BCV y particular";
     return action === "convert-bcv" ? "BCV" : "Particular";
@@ -134,6 +158,9 @@ export function convertPageEyebrow(
   if (action === "convert-private") {
     return `Particular · ${unitLabel}`;
   }
+  if (action === "convert-bcv-from-ves") {
+    return `BCV · Bs.S → ${unitLabel}`;
+  }
   const buy = action.startsWith("buy");
   const verb = buy ? "Comprar" : "Vender";
   const ctx = isPrivateAction(action) ? "Particular" : "BCV";
@@ -142,4 +169,8 @@ export function convertPageEyebrow(
 
 export function convertPageHeading(): string {
   return "¿Cuánto quieres convertir?";
+}
+
+export function convertPageHeadingFromVes(): string {
+  return "¿Cuántos bolívares quieres convertir?";
 }

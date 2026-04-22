@@ -1,0 +1,26 @@
+---
+description: lib/ et routes API — fetch, cache, erreurs, proxy Binance
+globs: lib/**/*.ts,app/api/**/*.ts
+alwaysApply: false
+---
+
+# lib/ et app/api/
+
+## Rôle de `lib/`
+
+- Y placer **URLs externes**, types de réponse, et fonctions **`get*` / `fetch*`** réutilisables par le layout, les RSC et les route handlers.
+- Éviter de disperser des `fetch` vers des tiers dans les composants si la même logique sert ailleurs — extraire dans `lib/` (comme `bcv-rate`, `cop-ves`, `binance-p2p`).
+
+## Cache Next (`fetch`)
+
+- Utiliser `fetch(url, { next: { revalidate: N } })` avec un intervalle cohérent avec la fraîcheur des données (ex. BCV ~60s, COP/USD ~1h dans `cop-ves`). Documenter dans le code si la source impose une autre fréquence.
+
+## Routes API (`app/api/**/route.ts`)
+
+- Réponses JSON **structurées** ; erreurs avec un code machine lisible, ex. `invalid_currency`, `invalid_json`, `trans_amount_required`, `upstream_failed`, `binance_http_error` — rester aligné sur les handlers existants.
+- Valider les paramètres (query, body) tôt ; statuts HTTP explicites (**400** client, **502** amont).
+
+## Binance P2P
+
+- **Ne pas** exposer de clés ou secrets côté client. Le client appelle **`POST /api/p2p/search`** ; le serveur relaie vers l’API publique Binance avec le corps construit via `lib/binance-p2p.ts` (`buildP2pSearchBody`, limites `rows`, etc.).
+- Toute évolution des filtres P2P : typer dans `lib/binance-p2p.ts` et garder la route mince (validation + proxy).

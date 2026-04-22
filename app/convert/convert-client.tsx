@@ -4,12 +4,13 @@ import BackNav from "@/components/back-nav/back-nav";
 import {
   convertPageEyebrow,
   convertPageHeading,
+  convertPageHeadingFromVes,
   currencyStepHref,
 } from "@/lib/flow";
 import { useBcvRate } from "./hooks/use-bcv-rate";
 import { useConvertForm } from "./hooks/use-convert-form";
 import { useConvertRouteParams } from "./hooks/use-convert-route-params";
-import { formatBs, formatPctSigned } from "./lib/convert-format";
+import { formatBs, formatFiat, formatPctSigned } from "./lib/convert-format";
 
 export default function ConvertClient() {
   const { action, currency } = useConvertRouteParams();
@@ -35,9 +36,11 @@ export default function ConvertClient() {
     copiedBsHint,
     copiedUnified,
     isUnified,
+    isVesToFiat,
     isPrivate,
     showPrivateField,
     privateRate,
+    refPrice,
     effectiveRate,
     amountN,
     result,
@@ -53,10 +56,14 @@ export default function ConvertClient() {
     copyUnifiedBs,
   } = form;
 
-  const inputSuffixClass =
-    unitLabel === "USD"
+  const inputSuffixClass = isVesToFiat
+    ? "border-neutral-200 text-neutral-400 bg-teal-600 dark:border-neutral-600 dark:text-neutral-500"
+    : unitLabel === "USD"
       ? "border-neutral-200 text-neutral-400 bg-emerald-600 dark:border-neutral-600 dark:text-neutral-500"
       : "border-neutral-200 text-neutral-400 bg-indigo-600 dark:border-neutral-600 dark:text-neutral-500";
+
+  const vesCopyBtnClass =
+    "inline-flex min-h-[2.75rem] flex-col items-start justify-center rounded-lg border border-neutral-200 bg-white px-3 py-2 text-left shadow-sm transition hover:border-teal-600 hover:bg-teal-50/60 active:scale-[0.99] dark:border-neutral-600 dark:bg-neutral-950 dark:hover:border-teal-500 dark:hover:bg-teal-950/25";
 
   return (
     <main className="convert relative mx-auto flex min-h-full max-w-3xl flex-col gap-8 px-4 pb-10 pt-14">
@@ -65,7 +72,7 @@ export default function ConvertClient() {
         {convertPageEyebrow(action, unitLabel)}
       </p>
       <h1 className="pb-4 text-center text-2xl font-semibold tracking-tight">
-        {convertPageHeading()}
+        {isVesToFiat ? convertPageHeadingFromVes() : convertPageHeading()}
       </h1>
 
       <div className="mx-auto flex w-full max-w-lg flex-col gap-4">
@@ -77,23 +84,27 @@ export default function ConvertClient() {
           }
         >
           <label className="flex min-w-0 flex-1 flex-col gap-2 text-sm font-medium">
-            Monto en {unitLabel}
+            {isVesToFiat ? "Monto en Bs.S (bolívares)" : `Monto en ${unitLabel}`}
             <div className="relative">
               <input
                 type="text"
                 inputMode="decimal"
                 autoComplete="off"
-                placeholder="Ej. 150"
+                placeholder={isVesToFiat ? "Ej. 3500000" : "Ej. 150"}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                aria-label={`Monto en ${unitLabel}`}
+                aria-label={
+                  isVesToFiat
+                    ? "Monto en bolívares soberanos"
+                    : `Monto en ${unitLabel}`
+                }
                 className="w-full rounded-lg border border-neutral-300 bg-white py-2.5 pl-3 pr-[3.25rem] text-right text-lg tabular-nums dark:border-neutral-600 dark:bg-neutral-950"
               />
               <span
                 className={`pointer-events-none absolute inset-y-0 right-0 flex items-center border-l pl-2 pr-2.5 text-[0.7rem] font-medium uppercase tracking-wide text-white ${inputSuffixClass}`}
                 aria-hidden
               >
-                {unitLabel}
+                {isVesToFiat ? "Bs.S" : unitLabel}
               </span>
             </div>
           </label>
@@ -225,6 +236,11 @@ export default function ConvertClient() {
               <p className="text-neutral-500">Cargando tasa del día…</p>
             ) : rateErr ? (
               <p className="text-red-600 dark:text-red-400">{rateErr}</p>
+            ) : isVesToFiat &&
+              (refPrice === null || refPrice <= 0) ? (
+              <p className="text-neutral-600 dark:text-neutral-400">
+                No hay tasa BCV disponible para {unitLabel} en este momento.
+              </p>
             ) : isPrivate &&
               (!privateRateInput.trim() || privateRate === null) ? (
               <p className="text-neutral-600 dark:text-neutral-400">
@@ -235,6 +251,34 @@ export default function ConvertClient() {
               <p className="text-neutral-600 dark:text-neutral-400">
                 Escribe un monto válido para ver la conversión al instante.
               </p>
+            ) : isVesToFiat ? (
+              <div className="text-lg text-neutral-800 dark:text-neutral-100">
+                <span className="block text-sm font-normal text-neutral-500">
+                  {amountN !== null ? formatBs(amountN) : "—"} Bs.S ÷{" "}
+                  {formatBs(refPrice!)} VES por{" "}
+                  {unitLabel} (BCV)
+                </span>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span className="text-neutral-500 dark:text-neutral-400">
+                    ≈
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => void copyConvertedBs()}
+                    className={vesCopyBtnClass}
+                    aria-label={`Copiar monto en ${unitLabel}`}
+                  >
+                    <span className="font-semibold tabular-nums">
+                      {formatFiat(result, unitLabel)}
+                    </span>
+                    <span className="text-xs font-normal text-neutral-500 dark:text-neutral-400">
+                      {copiedBsHint
+                        ? "Copiado al portapapeles"
+                        : "Toca para copiar"}
+                    </span>
+                  </button>
+                </div>
+              </div>
             ) : (
               <div className="text-lg text-neutral-800 dark:text-neutral-100">
                 <span className="block text-sm font-normal text-neutral-500">

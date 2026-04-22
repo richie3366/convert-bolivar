@@ -1,6 +1,6 @@
 import Link from "next/link";
 import React, { type ReactNode } from "react";
-import { currencyUnifiedHref } from "@/lib/flow";
+import { currencyUnifiedHref, currencyVesBcvHref } from "@/lib/flow";
 import "./home.css";
 import type { HomeProps } from "./home.types";
 
@@ -40,6 +40,24 @@ function IconCop({ className = iconGrid }: { className?: string }) {
       aria-hidden
     >
       <path d="M12 4v16M9 8h4.5a2.5 2.5 0 010 5H9M9 16h5a2.5 2.5 0 000-5H9" />
+    </svg>
+  );
+}
+
+function IconVesToFiat({ className = iconRow }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M4 12h16M4 12l4-4M4 12l4 4M20 12l-4-4M20 12l-4 4" />
+      <path d="M12 4v3M12 17v3" />
     </svg>
   );
 }
@@ -159,6 +177,22 @@ const Home = ({}: HomeProps) => {
               }
               icon={<IconArrowsUpDown />}
               className={`${btnBase} bg-emerald-600 text-white hover:bg-emerald-700 focus-visible:outline-emerald-500 dark:bg-emerald-600 dark:hover:bg-emerald-500`}
+            />
+          </li>
+          <li className="min-w-0">
+            <HomeActionLink
+              href={currencyVesBcvHref()}
+              variant="wide"
+              label={
+                <>
+                  <span className="block">Bolívares a dólares o euros</span>
+                  <span className="mt-1 block text-sm font-medium text-teal-100/95 dark:text-teal-100/90">
+                    Solo tasa BCV
+                  </span>
+                </>
+              }
+              icon={<IconVesToFiat />}
+              className={`${btnBase} bg-teal-600 text-white hover:bg-teal-700 focus-visible:outline-teal-500 dark:bg-teal-600 dark:hover:bg-teal-500`}
             />
           </li>
         </ul>

@@ -6,7 +6,7 @@ import {
   type ActionSlug,
   type CurrencySlug,
 } from "@/lib/flow";
-import { formatBsPlain } from "../lib/convert-format";
+import { formatBsPlain, formatFiatPlain } from "../lib/convert-format";
 import { buildUnifiedDiffText } from "../lib/convert-messages";
 import { parseAmount, parseRate } from "../lib/convert-parsing";
 import { CURRENCY_UNIT } from "../types/convert.constants";
@@ -35,6 +35,7 @@ export function useConvertForm({
   );
 
   const isUnified = action === "convert-unified";
+  const isVesToFiat = action === "convert-bcv-from-ves";
   const isPrivate = action !== null && isPrivateAction(action);
   const showPrivateField = isPrivate || isUnified;
 
@@ -49,8 +50,14 @@ export function useConvertForm({
 
   const amountN = parseAmount(amount);
   const result =
-    !isUnified && amountN !== null && effectiveRate !== null
-      ? amountN * effectiveRate
+    !isUnified && amountN !== null
+      ? isVesToFiat
+        ? refPrice !== null && refPrice > 0
+          ? amountN / refPrice
+          : null
+        : effectiveRate !== null
+          ? amountN * effectiveRate
+          : null
       : null;
 
   const resultBcv =
@@ -81,13 +88,16 @@ export function useConvertForm({
   const copyConvertedBs = useCallback(async () => {
     if (result === null) return;
     try {
-      await navigator.clipboard.writeText(formatBsPlain(result));
+      const text = isVesToFiat
+        ? formatFiatPlain(result, unitLabel)
+        : formatBsPlain(result);
+      await navigator.clipboard.writeText(text);
       setCopiedBsHint(true);
       window.setTimeout(() => setCopiedBsHint(false), 2000);
     } catch {
       // Sin permiso o contexto no seguro
     }
-  }, [result]);
+  }, [isVesToFiat, result, unitLabel]);
 
   const copyUnifiedBs = useCallback(
     async (which: CopiedUnifiedTarget, value: number) => {
@@ -110,6 +120,7 @@ export function useConvertForm({
     copiedBsHint,
     copiedUnified,
     isUnified,
+    isVesToFiat,
     isPrivate,
     showPrivateField,
     refPrice,

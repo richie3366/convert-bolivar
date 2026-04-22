@@ -1,0 +1,48 @@
+---
+description: Vue d’ensemble convert-bolivar — produit, routes, où étendre
+alwaysApply: true
+---
+
+# convert-bolivar — contexte agent
+
+## Produit
+
+Web **Next.js** (UI **espagnol**) pour convertir **bolívares (VES)** : taux **BCV** (officiel), mode **particulier** (taux saisi), croisement **COP↔VES**, et consultation **Binance P2P** (offres USDT/VES).
+
+## Stack
+
+- Next **16**, React **19**, TypeScript **strict**, Tailwind **4**, alias `@/*` → racine du repo.
+
+## Arborescence utile
+
+| Zone | Rôle |
+|------|------|
+| `app/` | App Router : pages, `layout.tsx`, `api/` |
+| `lib/` | Données et intégrations (`bcv-rate`, `cop-ves`, `binance-p2p`, `flow`) |
+| `components/` | UI partagée (`rate-ticker`, `back-nav`, etc.) |
+| `public/` | Assets PWA / icônes |
+
+## Routes principales
+
+- `/` → redirect `/home`
+- `/home` : menu (comprar/vender, COP, P2P)
+- `/currency` → `/convert` : flux USD/EUR BCV + particulier (`mode=convert`, query `action`)
+- `/cop` : COP↔VES
+- `/p2p` : recherche d’offres (via API interne)
+
+**Navigation et slugs** : centraliser dans `lib/flow.ts` (`ActionSlug`, `currencyUnifiedHref`, `currencyStepHref`, …). Éviter de dupliquer des URLs en dur hors de ce module sauf lien local évident.
+
+## Données (mental model)
+
+- **BCV** : `lib/bcv-rate.ts` (dolarflow)
+- **COP/VES** : `lib/cop-ves.ts` (BCV USD/VES + COP/USD marché)
+- **P2P** : `lib/binance-p2p.ts` + proxy `app/api/p2p/search`
+
+## Scripts npm
+
+- `npm run dev` / `build` / `lint`
+- `npm run g:c` / `g:p` : scaffolding composants (voir `scripts/`)
+
+## Next.js — lire le repo avant de coder
+
+Ce dépôt peut différer des habitudes Next « classiques ». **Lire `AGENTS.md` à la racine** avant toute évolution App Router / API non triviale.

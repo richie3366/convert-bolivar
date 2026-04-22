@@ -1,0 +1,29 @@
+---
+description: Conventions UI App Router — RSC, client, types et styles co-localisés
+globs: app/**/*.{tsx,ts},components/**/*.{tsx,ts}
+alwaysApply: false
+---
+
+# Frontend (app / components)
+
+## Server vs client
+
+- Pages et layouts sont en **RSC** par défaut : pas de hooks React côté serveur.
+- Logique interactive : composants **`use client`**, souvent nommés `*-client.tsx` à côté de `page.tsx` (ex. `convert/convert-client.tsx`, `cop/cop-client.tsx`).
+- `app/convert/page.tsx` enveloppe le client dans **`Suspense`** avec un fallback « Cargando… » — garder ce pattern si la page dépend de `useSearchParams` ou équivalent.
+
+## Organisation des fichiers
+
+- Types de page : `*.types.ts` dans le même dossier que la route (ex. `convert.types.ts`).
+- Styles : `*.css` co-localisés (`home.css`, `currency.css`, …), importés depuis la page ou le client concerné.
+- Composants réutilisables : `components/<nom>/<nom>.tsx` (kebab-case des dossiers, aligné sur l’existant).
+
+## UI et navigation
+
+- **Retour** : réutiliser `components/back-nav/back-nav.tsx` plutôt qu’inventer un nouveau pattern.
+- **Couleurs / cartes** : s’aligner sur `app/home/page.tsx` (boutons arrondis, emerald/amber, dark mode).
+- **Langue** : libellés utilisateur en **espagnol**.
+
+## Données affichées
+
+- Bandeau de taux : alimenté depuis `app/layout.tsx` (SSR) ; si un nouvel indicateur global est nécessaire, préférer étendre le layout ou un fetch serveur partagé plutôt que multiplier les appels client redondants.
